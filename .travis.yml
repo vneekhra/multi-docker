@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install
+    - docker build -t vneekhra/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run vneekhra/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t vneekhra/multi-client ./client
+    - docker build -t vneekhra/multi-nginx ./nginx
+    - docker build -t vneekhra/multi-server ./server
+    - docker build -t vneekhra/multi-worker ./worker
+    # Login to the docker CLI
+    -echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push vneekhra/multi-client
+    - docker push vneekhra/multi-nginx
+    - docker push vneekhra/multi-server
+    - docker push vneekhra/multi-worker
